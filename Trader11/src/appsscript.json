@@ -1,0 +1,25 @@
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "CommonLib",
+        "libraryId": "1eMJYhJXxX_HvJYxkBo8K6oYyJke2G8nbRbAi5LUB3O0IHIkkBD0CLHbs",
+        "version": "0",
+        "developmentMode": true
+      }
+    ]
+  },
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "MYSELF"
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/userinfo.email"
+  ]
+}

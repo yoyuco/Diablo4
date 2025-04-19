@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập</title>
+    <style>
+      body {
+        background-color: #f7f7f7;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        margin-top: 15px;
+        color: #555;
+        font-size: 14px;
+      }
+      input[type="text"], input[type="password"] {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-top: 5px;
+      }
+      input[type="submit"] {
+        margin-top: 20px;
+        padding: 12px;
+        background-color: #4285F4;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      input[type="submit"]:hover {
+        background-color: #357ae8;
+      }
+      .message {
+        margin-top: 15px;
+        text-align: center;
+        font-weight: bold;
+        color: #d8000c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h1>Đăng nhập</h1>
+      <form id="loginForm">
+        <label for="userID">ID:</label>
+        <input type="text" id="userID" name="userID" required>
+        <label for="password">Mật khẩu:</label>
+        <input type="password" id="password" name="password" required>
+        <input type="submit" value="Đăng nhập">
+      </form>
+      <div class="message" id="message"></div>
+    </div>
+    <script>
+  document.getElementById("loginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    var userID = document.getElementById("userID").value;
+    var password = document.getElementById("password").value;
+    console.log("Submit form với userID:", userID);
+    google.script.run.withSuccessHandler(function(result) {
+      console.log("Kết quả từ processLogin:", result);
+      if (typeof result === "string") {
+        document.getElementById("message").innerText = result;
+      } else if (result && result.fileId) {
+        document.getElementById("message").innerText = "Đăng nhập thành công: " + result.role;
+        window.open("https://docs.google.com/spreadsheets/d/" + result.fileId + "/edit", "_blank");
+      }
+    }).withFailureHandler(function(error) {
+      console.error("processLogin error:", error);
+      document.getElementById("message").innerText = "Lỗi: " + error.message;
+    }).webProcessLogin(userID, password);
+  });
+</script>
+  </body>
+</html>
