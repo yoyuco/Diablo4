@@ -6,26 +6,7 @@
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // Xử lý Trader1
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-/**
- * Hàm chung để push data từ bất kỳ src→dst nào.
- * Chỉ cần gọi CommonLib.pushData(srcConfig, dstConfig);
- */
-function pushData(srcConfig, dstConfig) {
-  // lock để tránh chạy chồng
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    var pending = fetchPendingData(srcConfig);
-    if (pending.length) {
-      writeData(pending, srcConfig, dstConfig);
-      Logger.log('Push ' + pending.length + ' dòng thành công.');
-    } else {
-      Logger.log('Không có dữ liệu mới để push.');
-    }
-  } finally {
-    lock.releaseLock();
-  }
-}
+
 
 
 
