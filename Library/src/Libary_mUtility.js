@@ -1,60 +1,3 @@
-/**
- * 1.1 getFileId: Lấy file ID từ file Database dựa trên tên file.
- * @param {string} fileName - Tên file cần lấy ID.
- * @return {string|null} File ID nếu tìm thấy, null nếu không.
- */
-function getFileMapping() {
-  var cache = CacheService.getScriptCache();
-  var cachedMapping = cache.get("fileMapping");
-  if (cachedMapping) {
-    return JSON.parse(cachedMapping);
-  }
-  
-  var ssDatabase = SpreadsheetApp.openById("1MOEie6MQS3P7tzKYqpbX-tOacN2u0qc2B7hlEshMItc");
-  var sheetFileIDs = ssDatabase.getSheetByName("FileIDs");
-  if (!sheetFileIDs) {
-    Logger.log("Không tìm thấy sheet 'FileIDs'");
-    return {};
-  }
-  
-  var data = sheetFileIDs.getDataRange().getValues();
-  var mapping = {};
-  for (var i = 1; i < data.length; i++) {
-    var name = data[i][0].toString().trim().toLowerCase();
-    var id = data[i][1].toString().trim();
-    if (name) mapping[name] = id;
-  }
-  cache.put("fileMapping", JSON.stringify(mapping), 300); // cache 5 phút
-  return mapping;
-}
-
-/**
- * 2.1 isMainSheet: Kiểm tra xem tên sheet có nằm trong khoảng "01" đến "30" hay không.
- * @param {Sheet} sheet
- * @return {boolean} true nếu là main sheet.
- */
-function isMainSheet(sheet) {
-  var name = sheet.getName();
-  return /^(0[1-9]|[12]\d|30)$/.test(name);
-}
-
-/**
- * 2.2 isConditionColumn: Kiểm tra xem vùng được chọn có giao với cột conditionIndex không.
- * @param {Range} rng - Vùng được chọn.
- * @param {number} conditionIndex - Số thứ tự cột điều kiện.
- * @return {boolean} true nếu giao, false nếu không.
- */
-function isConditionColumn(rng, conditionIndex) {
-  var startCol = rng.getColumn();
-  var endCol = startCol + rng.getNumColumns() - 1;
-  return (startCol <= conditionIndex && endCol >= conditionIndex);
-}
-
-function getFileIdOptimized(fileName) {
-  var mapping = getFileMapping();
-  return mapping[fileName.toString().trim().toLowerCase()] || null;
-}
-
 function isDataComplete(sheet, row, startCol, endCol) {
   var values = sheet.getRange(row, startCol, 1, endCol - startCol + 1).getValues()[0];
   return values.every(function(cell) {
@@ -111,45 +54,9 @@ function openFileAndSheet(fileKey, sheetName) {
   return { spreadsheet: ss, sheet: sheet };
 }
 
-function applyProtection(sheet, row, startCol, endCol, description) {
-  var range = sheet.getRange(row, startCol, 1, endCol - startCol + 1);
-  var protection = range.protect().setDescription(description);
-  var me = Session.getEffectiveUser();
-  protection.addEditor(me);
-  protection.removeEditors(protection.getEditors());
-  if (protection.canDomainEdit()) {
-    protection.setDomainEdit(false);
-  }
-  return protection;
-}
 
-/**
- * formatTimeDifference: Chuyển đổi hiệu số thời gian (ms) sang định dạng:
- * "x ngày: x giờ: x phút: x giây" (nếu ≥ 1 ngày),
- * "x giờ: x phút: x giây" (nếu ≥ 1 giờ nhưng < 1 ngày),
- * "x phút: x giây" (nếu ≥ 1 phút nhưng < 1 giờ),
- * "x giây" (nếu < 1 phút).
- *
- * @param {number} diffMs - Hiệu số thời gian tính theo milliseconds.
- * @return {string} Chuỗi định dạng thời gian.
- */
-function formatTimeDifference(diffMs) {
-  var totalSeconds = Math.floor(diffMs / 1000);
-  var days = Math.floor(totalSeconds / 86400);
-  var hours = Math.floor((totalSeconds % 86400) / 3600);
-  var minutes = Math.floor((totalSeconds % 3600) / 60);
-  var seconds = totalSeconds % 60;
-  
-  if (days > 0) {
-    return days + " ngày: " + hours + " giờ: " + minutes + " phút: " + seconds + " giây";
-  } else if (hours > 0) {
-    return hours + " giờ: " + minutes + " phút: " + seconds + " giây";
-  } else if (minutes > 0) {
-    return minutes + " phút: " + seconds + " giây";
-  } else {
-    return seconds + " giây";
-  }
-}
+
+
 
 /**
  * getConversionMatrix:

@@ -1,12 +1,3 @@
-// ------------------------------
-// Cấu hình Trung Tâm (Central Config)
-// ------------------------------
-var DATABASE_ID = "1MOEie6MQS3P7tzKYqpbX-tOacN2u0qc2B7hlEshMItc";
-
-// Các file Trader theo loại
-var TRADER11_ID = "1bwAecdS_qavOJtJlSjja4AI_HPHqADt5UtdhTLJtF0o"; // Nếu có nhiều trader1, bạn có thể định nghĩa thêm TRADER12_ID, TRADER13_ID, ...
-var TRADER21_ID = "1Ofbz2zlL4sqOWhZnY17DKAcuDQ6DAmCVBRGRgUVe8Fw"; // Tương tự, cho trader2
-
 // Cấu hình phân quyền dựa trên role (các role có thể được mở rộng)
 var ROLE_CONFIG = {
   "trader11": { fileId: TRADER11_ID, visibleStart: 1,  visibleEnd: 45 },

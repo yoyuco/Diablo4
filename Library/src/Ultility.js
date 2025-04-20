@@ -1,3 +1,6 @@
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Các hàm xử lý liên quan đến Data (Get/fill/Normalize,....)
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 /**
  * Lấy dữ liệu từ một sheet của Google Sheets dựa vào phạm vi cho trước.
  *
@@ -180,4 +183,175 @@ function letterToColumn(letter) {
     column += letter.toUpperCase().charCodeAt(i) - 64;
   }
   return column;
+}
+
+/**
+ * Kiểm tra dữ liệu trong một khoảng (range) của sheet đã cho có đầy đủ không (không có ô nào rỗng).
+ *
+ * @param {number} startRow - Số dòng bắt đầu.
+ * @param {number} [endRow] - Số dòng kết thúc, nếu không truyền thì mặc định = startRow.
+ * @param {number} startCol - Số cột bắt đầu.
+ * @param {number} [endCol] - Số cột kết thúc, nếu không truyền thì mặc định = startCol.
+ * @return {boolean} - Trả về true nếu tất cả các ô trong range đều có dữ liệu, ngược lại trả về false.
+ */
+function checkDataComplete(startRow, endRow, startCol, endCol) {
+  // Nếu không truyền endRow hoặc endCol thì mặc định bằng giá trị bắt đầu
+  if (endRow === undefined || endRow === null) {
+    endRow = startRow;
+  }
+  if (endCol === undefined || endCol === null) {
+    endCol = startCol;
+  }
+  
+  // Lấy đối tượng sheet hiện tại
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // Tính số hàng và số cột cần kiểm tra
+  var numRows = endRow - startRow + 1;
+  var numCols = endCol - startCol + 1;
+  
+  // Lấy dữ liệu từ khoảng đã xác định
+  var data = sheet.getRange(startRow, startCol, numRows, numCols).getValues();
+  
+  // Duyệt qua từng ô, nếu có ô nào rỗng ("" hoặc null) thì trả về false
+  for (var i = 0; i < data.length; i++) {
+    for (var j = 0; j < data[i].length; j++) {
+      if (data[i][j] === "" || data[i][j] === null) {
+        return false;
+      }
+    }
+  }
+  
+  // Nếu không có ô nào rỗng, trả về true
+  return true;
+}
+
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Các hàm xử lý liên quan đến Sheet/File
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Liên quan đến column/Row****************************************************************************************************
+/**
+ * Chuyển đổi số thứ tự cột thành ký tự cột (ví dụ 1 thành "A", 28 thành "AB").
+ *
+ * @param {number} column - Số thứ tự cột.
+ * @return {string} - Ký tự cột tương ứng.
+ */
+function columnToLetter(column) {
+  var letter = '';
+  while (column > 0) {
+    var temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
+/**
+ * 2.2 isConditionColumn: Kiểm tra xem vùng được chọn có giao với cột conditionIndex không.
+ * @param {Range} rng - Vùng được chọn.
+ * @param {number} conditionIndex - Số thứ tự cột điều kiện.
+ * @return {boolean} true nếu giao, false nếu không.
+ */
+function isConditionColumn(rng, conditionIndex) {
+  var startCol = rng.getColumn();
+  var endCol = startCol + rng.getNumColumns() - 1;
+  return (startCol <= conditionIndex && endCol >= conditionIndex);
+}
+
+// Liên quan đến File/Sheet ***************************************************************************************************
+/**
+ * Kiểm tra xem tên sheet có phải là main sheet hay không.
+ * Điều kiện: Tên sheet phải là chuỗi gồm 2 ký tự số từ "01" đến "31".
+ *
+ * @param {string} sheetName - Tên của sheet cần kiểm tra.
+ * @return {boolean} - Trả về true nếu tên sheet nằm trong khoảng từ "01" đến "31", ngược lại trả về false.
+ */
+function isMainSheet(sheetName) {
+  // Sử dụng biểu thức chính quy để kiểm tra:
+  // ^ : bắt đầu chuỗi
+  // (0[1-9] : số 01 đến 09
+  // |[12][0-9] : số 10 đến 29
+  // |3[01]) : số 30 hoặc 31
+  // $ : kết thúc chuỗi
+  var regex = /^(0[1-9]|[12][0-9]|3[01])$/;
+  return regex.test(sheetName);
+}
+
+/**
+ * 1.1 getFileId: Lấy file ID từ file Database dựa trên tên file.
+ * @param {string} fileName - Tên file cần lấy ID.
+ * @return {string|null} File ID nếu tìm thấy, null nếu không.
+ */
+function getFileMapping() {
+  var cache = CacheService.getScriptCache();
+  var cachedMapping = cache.get("fileMapping");
+  if (cachedMapping) {
+    return JSON.parse(cachedMapping);
+  }
+  
+  var ssDatabase = SpreadsheetApp.openById("1MOEie6MQS3P7tzKYqpbX-tOacN2u0qc2B7hlEshMItc");
+  var sheetFileIDs = ssDatabase.getSheetByName("FileIDs");
+  if (!sheetFileIDs) {
+    Logger.log("Không tìm thấy sheet 'FileIDs'");
+    return {};
+  }
+  
+  var data = sheetFileIDs.getDataRange().getValues();
+  var mapping = {};
+  for (var i = 1; i < data.length; i++) {
+    var name = data[i][0].toString().trim().toLowerCase();
+    var id = data[i][1].toString().trim();
+    if (name) mapping[name] = id;
+  }
+  cache.put("fileMapping", JSON.stringify(mapping), 300); // cache 5 phút
+  return mapping;
+}
+
+function getFileIdOptimized(fileName) {
+  var mapping = getFileMapping();
+  return mapping[fileName.toString().trim().toLowerCase()] || null;
+}
+
+function applyProtection(sheet, row, startCol, endCol, description) {
+  var range = sheet.getRange(row, startCol, 1, endCol - startCol + 1);
+  var protection = range.protect().setDescription(description);
+  var me = Session.getEffectiveUser();
+  protection.addEditor(me);
+  protection.removeEditors(protection.getEditors());
+  if (protection.canDomainEdit()) {
+    protection.setDomainEdit(false);
+  }
+  return protection;
+}
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Các hàm tiện ích khác
+//────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Xử lý chuỗi thời gian ******************************************************************************************************
+
+/**
+ * formatTimeDifference: Chuyển đổi hiệu số thời gian (ms) sang định dạng:
+ * "x ngày: x giờ: x phút: x giây" (nếu ≥ 1 ngày),
+ * "x giờ: x phút: x giây" (nếu ≥ 1 giờ nhưng < 1 ngày),
+ * "x phút: x giây" (nếu ≥ 1 phút nhưng < 1 giờ),
+ * "x giây" (nếu < 1 phút).
+ *
+ * @param {number} diffMs - Hiệu số thời gian tính theo milliseconds.
+ * @return {string} Chuỗi định dạng thời gian.
+ */
+function formatTimeDifference(diffMs) {
+  var totalSeconds = Math.floor(diffMs / 1000);
+  var days = Math.floor(totalSeconds / 86400);
+  var hours = Math.floor((totalSeconds % 86400) / 3600);
+  var minutes = Math.floor((totalSeconds % 3600) / 60);
+  var seconds = totalSeconds % 60;
+  
+  if (days > 0) {
+    return days + " ngày: " + hours + " giờ: " + minutes + " phút: " + seconds + " giây";
+  } else if (hours > 0) {
+    return hours + " giờ: " + minutes + " phút: " + seconds + " giây";
+  } else if (minutes > 0) {
+    return minutes + " phút: " + seconds + " giây";
+  } else {
+    return seconds + " giây";
+  }
 }
