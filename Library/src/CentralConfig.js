@@ -17,8 +17,33 @@ var FARMER4_ID = "1m5akI-hi_dCht8hIYDSNuFDT7ZjYmEpPm_a0GBUJzO4";
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // Config Trader1
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
 // Config Trader11*************************************************************************************************************
+var trader11Boosting = {
+  fileID: TRADER11_ID,           // ID của file Google Sheets chứa dữ liệu
+  sheetName: "Boosting",         // Tên của sheet lưu các đơn hàng boosting
+
+  headerRow: 10,                 // Dòng Header
+  dataStartRow: 11,              // Dòng bắt đầu chứa dữ liệu thực tế (bỏ qua header)
+
+  // Các cột dữ liệu (đánh số theo thứ tự cột trong sheet)
+  dateTimeCol: 1,                // Cột ngày giờ tạo đơn
+  idCol: 2,                      // Cột mã đơn hàng
+  suorceSellCol: 3,              // Cột nguồn bán (ví dụ: Discord, G2G, Website...)
+  customerNameCol: 4,            // Cột tên khách hàng
+  playModeCol: 5,                // Cột hình thức chơi (Pilot / Selfplay)
+  btagCol: 6,                    // Cột BattleTag hoặc thông tin tài khoản game
+  serviceNameCol: 7,             // Cột tên dịch vụ (ví dụ: level 1–90, campaign, v.v.)
+
+  handlingTimeCol: 8,            // Cột thời gian thực hiện đơn hàng
+
+  priceSellCol: 9,               // Cột thông giá bán
+  priceSellTypeCol: 10,          // Cột đơn vị giá bán
+  lowestPriceCol: 11,            // Cột giá thấp nhất G2G
+
+  noteCol: 12,                   // Cột note/cờ để push
+
+  flashCol: 13,                  // Cột cờ đã pushed
+};
 
 // Config Trader12*************************************************************************************************************
 
@@ -42,3 +67,33 @@ var FARMER4_ID = "1m5akI-hi_dCht8hIYDSNuFDT7ZjYmEpPm_a0GBUJzO4";
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // Config Chung
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Cấu hình cho sheet Boosting Orders
+var boostingOrders = {
+  fileID: BOOSTING_ID,           // ID của file Google Sheets chứa dữ liệu
+  sheetName: "Orders",           // Tên của sheet lưu các đơn hàng boosting
+
+  dataStartRow: 6,               // Dòng bắt đầu chứa dữ liệu thực tế (bỏ qua header)
+
+  // Các cột dữ liệu (đánh số theo thứ tự cột trong sheet)
+  dateTimeCol: 1,                // Cột ngày giờ tạo đơn
+  idCol: 2,                      // Cột mã đơn hàng
+  suorceSellCol: 3,              // Cột nguồn bán (ví dụ: Discord, G2G, Website...)
+  customerNameCol: 4,            // Cột tên khách hàng
+  playModeCol: 5,                // Cột hình thức chơi (Pilot / Selfplay)
+  btagCol: 6,                    // Cột BattleTag hoặc thông tin tài khoản game
+  serviceNameCol: 7,            // Cột tên dịch vụ (ví dụ: level 1–90, campaign, v.v.)
+
+  handlingTimeCol: 8,           // Cột thời gian thực hiện đơn hàng
+  pcCol: 9,                      // Cột thông tin PC / Trạng thái khi nhận đơn
+
+  deadLineCol: 10,              // Cột thời hạn hoàn thành đơn
+  orderStatusCol: 11,           // Cột trạng thái đơn hàng (mới, đang làm, hoàn thành...)
+  handlerCol: 12,               // Cột người thực hiện (booster)
+
+  timeStampCol: 13,             // Cột timestamp các thao tác hệ thống (ghi log)
+  preStepsCol: 14,              // Cột các bước trước khi thực hiện
+  postStepsCol: 15,             // Cột các bước sau khi thực hiện
+  stepProofCol: 16,             // Cột bằng chứng thực hiện (ảnh/video)
+
+  dateTimeCompletionsCol: 17    // Cột ngày giờ hoàn thành đơn hàng
+};

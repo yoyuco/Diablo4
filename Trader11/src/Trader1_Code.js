@@ -22,3 +22,7 @@ function myOnEdit(e) {
   
   CommonLib.handleOnEditTrader1Optimized(e, config);
 }
+
+function onPushButton() {
+  CommonLib.pushData(CommonLib.trader11Boosting, CommonLib.boostingOrders);
+}

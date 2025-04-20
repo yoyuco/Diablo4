@@ -185,47 +185,141 @@ function letterToColumn(letter) {
   return column;
 }
 
-/**
- * Kiểm tra dữ liệu trong một khoảng (range) của sheet đã cho có đầy đủ không (không có ô nào rỗng).
- *
- * @param {number} startRow - Số dòng bắt đầu.
- * @param {number} [endRow] - Số dòng kết thúc, nếu không truyền thì mặc định = startRow.
- * @param {number} startCol - Số cột bắt đầu.
- * @param {number} [endCol] - Số cột kết thúc, nếu không truyền thì mặc định = startCol.
- * @return {boolean} - Trả về true nếu tất cả các ô trong range đều có dữ liệu, ngược lại trả về false.
- */
-function checkDataComplete(startRow, endRow, startCol, endCol) {
-  // Nếu không truyền endRow hoặc endCol thì mặc định bằng giá trị bắt đầu
-  if (endRow === undefined || endRow === null) {
-    endRow = startRow;
-  }
-  if (endCol === undefined || endCol === null) {
-    endCol = startCol;
-  }
-  
-  // Lấy đối tượng sheet hiện tại
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
-  // Tính số hàng và số cột cần kiểm tra
-  var numRows = endRow - startRow + 1;
-  var numCols = endCol - startCol + 1;
-  
-  // Lấy dữ liệu từ khoảng đã xác định
-  var data = sheet.getRange(startRow, startCol, numRows, numCols).getValues();
-  
-  // Duyệt qua từng ô, nếu có ô nào rỗng ("" hoặc null) thì trả về false
-  for (var i = 0; i < data.length; i++) {
-    for (var j = 0; j < data[i].length; j++) {
-      if (data[i][j] === "" || data[i][j] === null) {
-        return false;
-      }
-    }
-  }
-  
-  // Nếu không có ô nào rỗng, trả về true
-  return true;
+function isDataComplete(sheet, row, startCol, endCol) {
+  var values = sheet.getRange(row, startCol, 1, endCol - startCol + 1).getValues()[0];
+  return values.every(function(cell) {
+    return cell.toString().trim() !== "";
+  });
 }
 
+/**
+ * Quét và lấy mảng các dòng pending từ sheet nguồn theo config.
+ * @param {Object} src  Config nguồn, gồm các trường:
+ *   - fileID, sheetName, dataStartRow, flashCol,
+ *   - idCol, noteCol, dateTimeCol, handlingTimeCol
+ * @return {Array<{row:number, data:any[]}>}
+ */
+function fetchPendingData(src) {
+  var ss  = SpreadsheetApp.openById(src.fileID);
+  var sh  = ss.getSheetByName(src.sheetName);
+  var last = sh.getLastRow();
+  var now  = new Date();
+  var out  = [];
+
+  for (var r = src.dataStartRow; r <= last; r++) {
+    if (sh.getRange(r, src.flashCol).getValue() === 'Pushed') continue;
+    if (isDataComplete(sh, r, src.idCol, src.noteCol)) {
+      // đánh dấu timestamp
+      sh.getRange(r, src.dateTimeCol).setValue(now);
+
+      // lấy mảng data
+      var num = src.handlingTimeCol - src.dateTimeCol + 1;
+      var row = sh.getRange(r, src.dateTimeCol, 1, num).getValues()[0];
+      out.push({row: r, data: row});
+    }
+  }
+  SpreadsheetApp.flush();
+  return out;
+}
+
+/**
+ * Ghi mảng pending xuống sheet Orders và đánh dấu & khóa dòng nguồn.
+ */
+function writeData(pending, src, dst) {
+  var ssDst = SpreadsheetApp.openById(dst.fileID);
+  var shDst = ssDst.getSheetByName(dst.sheetName);
+  var ssSrc = SpreadsheetApp.openById(src.fileID);
+  var shSrc = ssSrc.getSheetByName(src.sheetName);
+
+  // 1) Tìm dòng trống đầu tiên
+  var nextDst = CommonLib.findFirstEmptyRow(
+    shDst,
+    dst.dataStartRow,
+    dst.dateTimeCol
+  );
+
+  // 2) Lặp qua từng item trong pending
+  pending.forEach(function(item) {
+    // nếu cần, insert thêm dòng
+    if (nextDst > shDst.getLastRow()) {
+      shDst.insertRowAfter(shDst.getLastRow());
+    }
+    // ghi dữ liệu
+    shDst.getRange(nextDst, dst.dateTimeCol,
+                  1, item.data.length)
+         .setValues([item.data]);
+    SpreadsheetApp.flush();
+
+    // 3) đánh dấu & khóa dòng nguồn
+    CommonLib.markRowAsPushedAndProtect(
+      shSrc,
+      item.row,
+      src.flashCol
+    );
+
+    nextDst++;
+  });
+}
+
+/**
+ * Hàm chung để push data từ bất kỳ src→dst nào.
+ * Chỉ cần gọi CommonLib.pushData(srcConfig, dstConfig);
+ */
+function pushData(srcConfig, dstConfig) {
+  // lock để tránh chạy chồng
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var pending = fetchPendingData(srcConfig);
+    if (pending.length) {
+      writeData(pending, srcConfig, dstConfig);
+      Logger.log('Push ' + pending.length + ' dòng thành công.');
+    } else {
+      Logger.log('Không có dữ liệu mới để push.');
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Tìm dòng trống đầu tiên trong sheet, dựa vào cột kiểm tra.
+ * @param {Sheet} sheet       – sheet đích
+ * @param {number} startRow   – dòng bắt đầu tìm
+ * @param {number} checkCol   – cột dùng làm tiêu chí (ô trống)
+ * @return {number}           – số dòng đầu tiên có ô checkCol trống
+ */
+function findFirstEmptyRow(sheet, startRow, checkCol) {
+  var last = sheet.getLastRow();
+  for (var r = startRow; r <= last; r++) {
+    if (sheet.getRange(r, checkCol).getValue() === "") {
+      return r;
+    }
+  }
+  // nếu hết rồi, trả về dòng kế tiếp để insert
+  return last + 1;
+}
+
+
+/**
+ * Đánh dấu đã Push và khóa dòng nguồn không cho chỉnh sửa nữa.
+ * @param {Sheet} sheet     – sheet nguồn
+ * @param {number} row      – dòng cần đánh dấu
+ * @param {number} flashCol – cột flag “Pushed”
+ */
+function markRowAsPushedAndProtect(sheet, row, flashCol) {
+  // 1) Đánh dấu
+  sheet.getRange(row, flashCol).setValue('Pushed');
+  // 2) Khóa toàn bộ row
+  var range = sheet.getRange(row, 1, 1, sheet.getLastColumn());
+  var protection = range.protect().setDescription('Lock after push');
+  // remove all editors except owner
+  try {
+    protection.removeEditors(protection.getEditors());
+  } catch(e) {
+    // nếu không có editor nào để remove thì bỏ qua
+  }
+}
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // Các hàm xử lý liên quan đến Sheet/File
 //────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
