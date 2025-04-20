@@ -1,0 +1,85 @@
+
+Tổng Quan Dự Án
+
+Dự án nhằm quản lý hiệu quả các hoạt động mua bán, cung cấp dịch vụ liên quan đến gold và items trong game. Các thành phần chính bao gồm việc tổ chức kho hàng, phân công nhân sự và xây dựng các công cụ hỗ trợ.
+
+1. Cơ Cấu Tổ Chức
+
+Kho:
+- Quản lý bằng tên đăng nhập từng account.
+- Mỗi account gồm 14 nhân vật (character), mỗi nhân vật có một inventory.
+- Mỗi account có 6 stash tab, chia thành 20 vị trí để lưu các loại items.
+- Gold giới hạn 100b mỗi account chung tất cả các nhân vật.
+
+Phân Công Nhân Sự:
+- Trader1 (2 người): Tạo đơn hàng, cập nhật giá thị trường về service và gold.
+- Trader2 (2 người): Thu mua, giao hàng gold và items, quản lý account lưu trữ, cập nhật giá mua gold và quản lý nguồn hàng.
+- Farmer (4 người): Thực hiện dịch vụ, thu thập gold và items, bàn giao cho Trader2.
+
+2. Quy Trình Hoạt Động
+
+Đơn Hàng Bán (Trader1):
+- Gold: Ngày giờ, nguồn bán, khách hàng (tên, Btag/ID+PW), số lượng, giá bán, giá vốn, lợi nhuận, vị trí giao hàng.
+- Items: Ngày giờ, nguồn bán, khách hàng, loại items, thuộc tính, giá bán/mua, lợi nhuận, vị trí giao hàng.
+- Service: Ngày giờ, nguồn bán, khách hàng, hình thức (selfplay/pilot), dịch vụ, thời hạn.
+
+Đơn Hàng Mua và Giao Hàng (Trader2):
+- Mua Gold & Items: Ngày giờ, nguồn mua, loại items/gold, thuộc tính items, số lượng gold, giá mua, vị trí nhập kho, bằng chứng hình ảnh/video.
+- Giao hàng: Thông tin được tự động chuyển từ Trader1, bổ sung bằng chứng hình ảnh/video.
+
+Đơn Hàng Service và Items/Gold Thu Thập (Farmer):
+- Service: Thông tin từ Trader1, trạng thái, người thực hiện, tiến trình, deadline, bằng chứng hoàn thành.
+- Items/Gold thu thập: Tổng hợp và bàn giao cuối ca, kiểm tra và nhập vào kho bởi Trader2.
+
+3. Thông Tin Cơ Bản
+
+Nguồn bán và mua:
+- Trader1 quản lý nguồn bán.
+- Trader2 quản lý nguồn mua.
+
+Khách hàng:
+- Thông tin: Tên, Btag/ID+PW.
+
+Loại Items:
+- Legendary: Helm, Chest, Gloves, Pants, Boots, Weapons (1H, 2H), Amulet, Ring, Aspect; gồm 3 thuộc tính với dấu * trước GA.
+- Unique: UHelm, UChest, UGloves, UPants, UBoots, Weapons (1H, 2H), UAmulet, URing; thuộc tính bao gồm Tên, GA, Effect.
+
+4. Yêu Cầu Quản Lý và Báo Cáo
+
+Quản lý Kho:
+- Gold: Tổng số lượng, trung bình giá mua (USD, VND, FG), số lượng mỗi account.
+- Items: Loại items, thuộc tính, tổng số lượng, trung bình giá (USD, VND, FG, Gold), số lượng tại mỗi vị trí.
+
+Quản lý Trader1:
+- Thông tin đơn hàng rõ ràng.
+- Giá bán và giá vốn tự động từ dữ liệu kho.
+- Tính toán lợi nhuận và hiệu suất.
+
+Quản lý Trader2:
+- Đủ các thông tin tiền tệ khi mua.
+- Thông tin chi tiết đơn hàng mua và bán.
+- Báo cáo hiệu suất thu mua.
+
+Quản lý Farmer:
+- Thông tin đơn hàng nhập kho.
+- Theo dõi hiệu quả thu thập items và khả năng bán.
+
+Dữ liệu tiền tệ:
+- Loại tiền: USD, VND, Gold, FG.
+- Tỷ giá cập nhật tự động (USD/VND), tỷ giá Gold và FG cập nhật thủ công hoặc bằng công cụ.
+
+5. Cấu Trúc Thư Viện và Dữ Liệu
+
+Library (thư viện dùng chung):
+- 0CentralConfig.gs: Lưu các biến toàn cục.
+- mUltility.gs: Các hàm dùng chung tái sử dụng.
+- CommonLibrary.gs: Các hàm xử lý chung.
+- HandleOnEditTrader.gs: Các hàm chung xử lý trong OnEdit triggers.
+
+Các Project chính:
+- Kho: Xử lý file "Kho".
+- Trader1: Xử lý file "Trader11".
+- Trader2: Xử lý file "Trader21".
+- Web: Xử lý web app, giao diện login.
+
+Các project khác sử dụng thư viện chung với identifier là CommonLib để tối ưu hóa quản lý và tái sử dụng code.
