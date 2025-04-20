@@ -232,7 +232,7 @@ function writeData(pending, src, dst) {
   var shSrc = ssSrc.getSheetByName(src.sheetName);
 
   // 1) Tìm dòng trống đầu tiên
-  var nextDst = CommonLib.findFirstEmptyRow(
+  var nextDst = findFirstEmptyRow(
     shDst,
     dst.dataStartRow,
     dst.dateTimeCol
@@ -251,7 +251,7 @@ function writeData(pending, src, dst) {
     SpreadsheetApp.flush();
 
     // 3) đánh dấu & khóa dòng nguồn
-    CommonLib.markRowAsPushedAndProtect(
+    markRowAsPushedAndProtect(
       shSrc,
       item.row,
       src.flashCol

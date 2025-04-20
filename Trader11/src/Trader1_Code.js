@@ -1,14 +1,4 @@
-function onOpen(e) {
-  // Reset lại file về trạng thái mặc định
-  CommonLib.resetFileSettings();
-  // Tạo menu đăng nhập
-  SpreadsheetApp.getUi().createMenu("Tùy chỉnh")
-    .addItem("Đăng nhập", "showLoginDialog")
-    .addToUi();
-}
-
-function myOnEdit(e) {
-  var config = {
+var config = {
     dvRegions: CommonLib.dvRegionsTrader1,
     afRegions: CommonLib.afRegionsTrader1,
     saleGoldConfigs: CommonLib.saleGoldConfigs,
@@ -19,7 +9,17 @@ function myOnEdit(e) {
     itemsPush: CommonLib.itemsPush,
     saleItemsSaleConfig: CommonLib.saleItemsSaleConfig
   };
-  
+
+function onOpen(e) {
+  // Reset lại file về trạng thái mặc định
+  CommonLib.resetFileSettings();
+  // Tạo menu đăng nhập
+  SpreadsheetApp.getUi().createMenu("Tùy chỉnh")
+    .addItem("Đăng nhập", "showLoginDialog")
+    .addToUi();
+}
+
+function myOnEdit(e) {
   CommonLib.handleOnEditTrader1Optimized(e, config);
 }
 
